@@ -11,6 +11,16 @@
 #include "LoRaWan_APP.h"
 #include "Arduino.h"
 
+// ===========================================================
+
+const uint32_t SERIAL_SPEED = 115200;
+
+const unsigned long cycle_time = 500;   // Milisegundos
+
+const bool debug = true;
+
+// ===========================================================
+
 /*
  * set LoraWan_RGB to 1,the RGB active in loraWan
  * RGB red means sending;
@@ -20,74 +30,98 @@
 #define LoraWan_RGB 0
 #endif
 
-#define RF_FREQUENCY                                915000000 // Hz
+#define MHZ 1000000
 
-#define TX_OUTPUT_POWER                             14        // dBm
+#define RF_FREQUENCY                      915*MHZ   // RF frequency, in Hz
+#define TX_OUTPUT_POWER                   22        // Output power, max 22 dBm
+#define LORA_BANDWIDTH                    0         // Bandwidth, 0=125 kHz, 1=250 kHz, 2=500 kHz, 3=reserved
+#define LORA_SPREADING_FACTOR             7         // [SF7..SF12]
+#define LORA_CODINGRATE                   1         // 1=4/6, 2=4/7, 3=4/7, 4=4/8
+#define LORA_PREAMBLE_LENGTH              8         // Same for Tx and Rx
+#define LORA_SYMBOL_TIMEOUT               0         // Symbols
+#define LORA_FIX_LENGTH_PAYLOAD_ON        false
+#define LORA_IQ_INVERSION_ON              false
 
-#define LORA_BANDWIDTH                              0         // [0: 125 kHz,
-                                                              //  1: 250 kHz,
-                                                              //  2: 500 kHz,
-                                                              //  3: Reserved]
-#define LORA_SPREADING_FACTOR                       7         // [SF7..SF12]
-#define LORA_CODINGRATE                             1         // [1: 4/5,
-                                                              //  2: 4/6,
-                                                              //  3: 4/7,
-                                                              //  4: 4/8]
-#define LORA_PREAMBLE_LENGTH                        8         // Same for Tx and Rx
-#define LORA_SYMBOL_TIMEOUT                         0         // Symbols
-#define LORA_FIX_LENGTH_PAYLOAD_ON                  false
-#define LORA_IQ_INVERSION_ON                        false
+#define RX_TIMEOUT_VALUE                  1000
+#define PACKET_SIZE                       64 // Define the payload size here
 
+#define LED_COLOR_RED 0xff0000
+#define LED_COLOR_GREEN 0x00ff00
+#define LED_OFF 0
 
-#define RX_TIMEOUT_VALUE                            1000
-#define BUFFER_SIZE                                 30 // Define the payload size here
-
-char txpacket[BUFFER_SIZE];
-char rxpacket[BUFFER_SIZE];
-
+char txpacket[PACKET_SIZE];
+char rxpacket[PACKET_SIZE];
 static RadioEvents_t RadioEvents;
+int16_t packetNumber;
+int16_t rssi, rxSize;
 
-int16_t txNumber;
+char buf1[32];
 
-int16_t rssi,rxSize;
+// ===========================================================
 
-
-void setup() {
-    Serial.begin(115200);
-
-    txNumber=0;
-    rssi=0;
-	
-	  RadioEvents.RxDone = OnRxDone;
-    Radio.Init( &RadioEvents );
-    Radio.SetChannel( RF_FREQUENCY );
-	
-	Radio.SetRxConfig( MODEM_LORA, LORA_BANDWIDTH, LORA_SPREADING_FACTOR,
-                                   LORA_CODINGRATE, 0, LORA_PREAMBLE_LENGTH,
-                                   LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON,
-                                   0, true, 0, 0, LORA_IQ_INVERSION_ON, true );
-   turnOnRGB(COLOR_SEND,0); //change rgb color
-   Serial.println("into RX mode");
-   }
-
-
-
-void loop()
-{
-	Radio.Rx( 0 );
-  delay(500);
-  Radio.IrqProcess( );
+// Convierte un float en una string decimal, con decs decimales
+void f2s (char* buf, float value, unsigned int decs) {
+  buf[0] = 0;
+  float fractpart, intpart;
+  fractpart = modf(value, &intpart);
+  fractpart = fabs(fractpart) * (pow(10,decs));
+  sprintf(buf, "%d.%d", (int)(intpart), (int)(fractpart));
 }
 
-void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
-{
-    rssi=rssi;
-    rxSize=size;
-    memcpy(rxpacket, payload, size );
-    rxpacket[size]='\0';
-    turnOnRGB(COLOR_RECEIVED,0);
-    Radio.Sleep( );
-    Serial.printf("\r\nreceived packet \"%s\" with rssi %d , length %d\r\n",rxpacket,rssi,rxSize);
-    delay(200); turnOffRGB();
+void setup() {
 
+  if (debug) Serial.begin(SERIAL_SPEED);
+
+  if (debug) {
+    delay(1000);
+    Serial.println();
+    Serial.println("==========================");
+    Serial.println("Inicializando radio LoRa ...");
+  }
+   
+  packetNumber = 0;
+  rssi = 0;
+	
+  RadioEvents.RxDone = OnRxDone;
+  Radio.Init(&RadioEvents);
+  Radio.SetChannel(RF_FREQUENCY);
+	
+	Radio.SetRxConfig(MODEM_LORA, LORA_BANDWIDTH, LORA_SPREADING_FACTOR,
+     LORA_CODINGRATE, 0, LORA_PREAMBLE_LENGTH,
+     LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON,
+     0, true, 0, 0, LORA_IQ_INVERSION_ON, true );
+  
+  turnOnRGB(LED_COLOR_RED, 0);
+
+  if (debug) {
+    f2s(buf1, RF_FREQUENCY/MHZ, 3);
+    Serial.printf("Escuchando en %s MHz\r\n", buf1);
+  }
+   
+}
+
+// ===========================================================
+
+void loop() {
+	
+	Radio.Rx(0);
+  delay(cycle_time);
+  Radio.IrqProcess();
+
+}
+
+void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr) {
+
+    packetNumber += 1;
+    rssi = rssi;
+    rxSize = size;
+    memcpy(rxpacket, payload, size);
+    rxpacket[size] = '\0';
+    
+    turnOnRGB(LED_COLOR_GREEN, 0);
+    Radio.Sleep( );
+    Serial.printf("\r\nPaquete #%d recibido, %d bytes, rssi = %d\r\n", packetNumber, rxSize, rssi);
+    Serial.println(rxpacket);
+    delay(200); turnOffRGB();
+    
 }
