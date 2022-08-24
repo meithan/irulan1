@@ -317,6 +317,7 @@ void loop() {
   sprintf(rtc_time_buf,"%02u-%02u-%02u %02u:%02u:%02u ", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
   
   if (debug) {
+    Serial.print("RTC ");
     Serial.print(rtc_time_buf);
     Serial.print(" (");
     Serial.print("UNIX = ");
@@ -372,6 +373,7 @@ void loop() {
   if (debug) {  
     Serial.print("lat "); Serial.print(GPS.location.lat());
     Serial.print(", lon "); Serial.print(GPS.location.lng());
+    Serial.print(", sats "); Serial.print(GPS.satellies.value());
     Serial.println();
   }
 
@@ -386,10 +388,11 @@ void loop() {
   // LORA
 
   // Armar paquete
-  sprintf(packet, "%s", "Prueba");
+  sprintf(packet, "%s", rtc_time_buf);
 
   // Transmitir paquete
   turnOnRGB(LED_COLOR_RED, 0);
+  if (debug) Serial.println("Transmitting ...");
   Radio.Send((uint8_t*)packet, strlen(packet));
   if (debug) Serial.println("TX done");
   turnOffRGB();
@@ -401,7 +404,7 @@ void loop() {
   
   f2s(buf1, GPS.location.lat(), 5);
   f2s(buf2, GPS.location.lng(), 5);
-  sprintf(line_buf, "lat %s   lon %s", buf1, buf2);
+  sprintf(line_buf, "lat %s  lon %s  sat %d", buf1, buf2, GPS.satellites.value());
   oled.drawString(0, 12, line_buf);
 
   f2s(buf1, baro_alt, 1);
