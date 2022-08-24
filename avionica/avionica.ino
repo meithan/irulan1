@@ -373,7 +373,7 @@ void loop() {
   if (debug) {  
     Serial.print("lat "); Serial.print(GPS.location.lat());
     Serial.print(", lon "); Serial.print(GPS.location.lng());
-    Serial.print(", sats "); Serial.print(GPS.satellies.value());
+    Serial.print(", sats "); Serial.print(GPS.satellites.value());
     Serial.println();
   }
 
