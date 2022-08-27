@@ -35,6 +35,7 @@ const char* version_str = "v0.9";
 
 const unsigned long cycle_time = 1000;   // Milisegundos
 
+#define BUF_SIZE 12
 const uint32_t SERIAL_SPEED = 115200;
 const bool debug = true;
 
@@ -54,7 +55,7 @@ static int32_t _temp, _humid, _pres, _gas;
 bool bme_success;
 
 char line_buf[18];
-char buf1[12], buf2[12], buf3[12];
+char buf1[BUF_SIZE], buf2[BUF_SIZE], buf3[BUF_SIZE];
 
 unsigned long next_millis = 0;
 
@@ -234,7 +235,7 @@ void f2s (char* buf, float value, unsigned int decs) {
   float fractpart, intpart;
   fractpart = modf(value, &intpart);
   fractpart = fabs(fractpart) * (pow(10,decs));
-  sprintf(buf, "%d.%d", (int)(intpart), (int)(fractpart));
+  snprintf(buf, BUF_SIZE, "%d.%d", (int)(intpart), (int)(fractpart));
 }
 
 
