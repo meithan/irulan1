@@ -19,12 +19,12 @@ RTC_DS1307 rtc;
 // Fijar aquí el offset del reloj, que es aproximadamente
 // el tiempo que toma compilar y subir el código al MCU
 // TimeSpan(días, horas, minutos, segundos)
-TimeSpan mcu_offset = TimeSpan(0,0,0,10);
+TimeSpan mcu_offset = TimeSpan(0,0,0,14);
 
 // ============================================================
 
 time_t t;
-char *str;
+char str[20];
 
 void setup () {
   
@@ -44,7 +44,7 @@ void setup () {
 
   Serial.print("Ajustando hora del RTC a ");
   t = set_time.unixtime();
-  str = ctime(&t);
+  strftime(str, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));
   Serial.println(str);
   rtc.adjust(set_time);
 
@@ -57,8 +57,8 @@ void loop () {
     DateTime now = rtc.now();
 
     t = now.unixtime();
-    str = ctime(&t);
-    Serial.println(str);
+    strftime(str, 20, "%Y-%m-%d %H:%M:%S", localtime(&t));
+    Serial.print(str);
     Serial.print(" (UNIX = ");
     Serial.print(now.unixtime());
     Serial.print(")");
