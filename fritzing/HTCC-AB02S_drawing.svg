@@ -25,9 +25,9 @@
      inkscape:document-units="mm"
      showgrid="false"
      showguides="true"
-     inkscape:zoom="5.1754899"
-     inkscape:cx="97.478695"
-     inkscape:cy="29.852246"
+     inkscape:zoom="7.319248"
+     inkscape:cx="107.18314"
+     inkscape:cy="53.489102"
      inkscape:window-width="2560"
      inkscape:window-height="1378"
      inkscape:window-x="2560"
@@ -558,6 +558,80 @@
          stroke-width="0.05"
          y2="56.68"
          id="line11853-5" />
+    </g>
+    <g
+       gorn="0.2.12"
+       id="C6-48-6"
+       transform="matrix(0.35277782,0,0,0.35277782,47.183834,55.932016)">
+      <g
+         id="g11849-8-2">
+        <path
+           d="m 35.911,56.396 c 0,0.157 -0.127,0.284 -0.283,0.284 h -3.544 c -0.156,0 -0.283,-0.127 -0.283,-0.284 v -1.56 c 0,-0.156 0.127,-0.283 0.283,-0.283 h 3.544 c 0.156,0 0.283,0.127 0.283,0.283 z"
+           fill="#ababab"
+           id="path11845-3-9" />
+        <rect
+           height="2.1270001"
+           fill="#706123"
+           width="2.2679999"
+           x="32.721001"
+           y="54.553001"
+           id="rect11847-8-1" />
+      </g>
+      <line
+         x1="32.721001"
+         fill="none"
+         stroke="#000000"
+         x2="32.721001"
+         y1="54.553001"
+         stroke-width="0.05"
+         y2="56.68"
+         id="line11851-7-2" />
+      <line
+         x1="34.988998"
+         fill="none"
+         stroke="#000000"
+         x2="34.988998"
+         y1="54.553001"
+         stroke-width="0.05"
+         y2="56.68"
+         id="line11853-5-7" />
+    </g>
+    <g
+       gorn="0.2.12"
+       id="C6-48-0"
+       transform="matrix(0.35277782,0,0,0.35277782,47.183834,57.529439)">
+      <g
+         id="g11849-8-9">
+        <path
+           d="m 35.911,56.396 c 0,0.157 -0.127,0.284 -0.283,0.284 h -3.544 c -0.156,0 -0.283,-0.127 -0.283,-0.284 v -1.56 c 0,-0.156 0.127,-0.283 0.283,-0.283 h 3.544 c 0.156,0 0.283,0.127 0.283,0.283 z"
+           fill="#ababab"
+           id="path11845-3-3" />
+        <rect
+           height="2.1270001"
+           fill="#706123"
+           width="2.2679999"
+           x="32.721001"
+           y="54.553001"
+           id="rect11847-8-6" />
+      </g>
+      <line
+         x1="32.721001"
+         fill="none"
+         stroke="#000000"
+         x2="32.721001"
+         y1="54.553001"
+         stroke-width="0.05"
+         y2="56.68"
+         id="line11851-7-0" />
+      <line
+         x1="34.988998"
+         fill="none"
+         stroke="#000000"
+         x2="34.988998"
+         y1="54.553001"
+         stroke-width="0.05"
+         y2="56.68"
+         id="line11853-5-6" />
     </g>
     <g
        gorn="0.2.12"
@@ -1720,30 +1794,14 @@
         </g>
       </g>
     </g>
-    <g
-       id="g47608"
-       sodipodi:insensitive="true">
-      <rect
-         style="fill:#001944;fill-opacity:1;stroke:#1a1a1a;stroke-width:0.664;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
-         id="rect12121"
-         width="28.222744"
-         height="17.974306"
-         x="24.497889"
-         y="60.389137"
-         rx="2.7755576e-17" />
-      <text
-         xml:space="preserve"
-         style="font-style:normal;font-weight:normal;font-size:4.16924;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.260577"
-         x="27.532896"
-         y="69.813393"
-         id="text12210"
-         transform="scale(0.98480612,1.0154283)"><tspan
-           sodipodi:role="line"
-           id="tspan12208"
-           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.16924;font-family:'Droid Sans';-inkscape-font-specification:'Droid Sans';fill:#ffffff;fill-opacity:1;stroke-width:0.260577"
-           x="27.532896"
-           y="69.813393">HTCC-AB02S</tspan></text>
-    </g>
+    <rect
+       style="fill:#ffffff;fill-opacity:0.20208758;stroke:none;stroke-width:0.709346;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       id="rect12121"
+       width="32.290653"
+       height="17.928959"
+       x="24.520563"
+       y="60.411812"
+       rx="3.1756152e-17" />
     <g
        id="g30780"
        transform="translate(0.01770051,-0.21991226)">
@@ -3015,6 +3073,18 @@
          y="59.077896">Vin</tspan></text>
     <text
        xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;line-height:1.25;font-family:'Droid Sans';-inkscape-font-specification:'Droid Sans';letter-spacing:0px;word-spacing:0px;stroke-width:0.264583"
+       x="-60.703053"
+       y="59.924755"
+       id="text45820-2"
+       transform="rotate(-90)"><tspan
+         sodipodi:role="line"
+         id="tspan45818-6"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:2.11667px;font-family:'Droid Sans';-inkscape-font-specification:'Droid Sans';fill:#b3b3b3;stroke-width:0.264583"
+         x="-60.703053"
+         y="59.924755">V1.1</tspan></text>
+    <text
+       xml:space="preserve"
        style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:1.41111;line-height:1.25;font-family:'Droid Sans';-inkscape-font-specification:'Droid Sans';letter-spacing:-0.132292px;word-spacing:0px;stroke-width:0.264583"
        x="13.712734"
        y="59.06205"
@@ -3463,5 +3533,41 @@
          y="34.422001"
          id="rect12312" />
     </g>
+    <rect
+       style="fill:#000226;fill-opacity:1;stroke:#979797;stroke-width:0.150675;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       id="rect1712"
+       width="26.849325"
+       height="14.849325"
+       x="27.241226"
+       y="60.252872"
+       rx="3.2979347e-17" />
+    <rect
+       style="fill:#010000;fill-opacity:1;stroke:none;stroke-width:0.187335;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1"
+       id="rect12270"
+       width="26.71287"
+       height="3.1405571"
+       x="27.290079"
+       y="75.203049"
+       rx="3.1187455e-17" />
+    <rect
+       style="fill:#281c00;fill-opacity:1;stroke:none;stroke-width:0.328812;stroke-linejoin:round;stroke-opacity:1"
+       id="rect9306"
+       width="11.59947"
+       height="1.4720316"
+       x="34.846779"
+       y="77.735992"
+       rx="1.4689719e-17" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:4.45397px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.278372"
+       x="26.086864"
+       y="74.765739"
+       id="text12210"
+       transform="scale(1.0547221,0.94811704)"><tspan
+         sodipodi:role="line"
+         id="tspan12208"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.45397;font-family:'Droid Sans';-inkscape-font-specification:'Droid Sans';fill:#ffffff;fill-opacity:1;stroke-width:0.278372"
+         x="26.086864"
+         y="74.765739">HTCC-AB02S</tspan></text>
   </g>
 </svg>
