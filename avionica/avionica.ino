@@ -230,19 +230,6 @@ void setup_LoRa() {
 
 }
 
-// -------------------------------------
-// Funciones de utilería
-
-// Convierte un float en una string decimal, con decs decimales
-void f2s (char* buf, float value, unsigned int decs) {
-  buf[0] = '\0';
-  float fractpart, intpart;
-  fractpart = modf(value, &intpart);
-  fractpart = fabs(fractpart) * (pow(10,decs));
-  snprintf(buf, BUF_SIZE, "%d.%d", (int)(intpart), (int)(fractpart));
-}
-
-
 // ===========================================================
 // Inicialización principal
 
@@ -340,12 +327,12 @@ void loop() {
   gx = gyro.gyro.x; gy = gyro.gyro.y; gz = gyro.gyro.z;
   mx = magn.magnetic.x; my = magn.magnetic.y; mz = magn.magnetic.z;
 
-  if (debug) {   
-    f2s(buf1, ax, 2); f2s(buf2, ay, 2); f2s(buf3, az, 2);
+  if (debug) {
+    dtostrf(ax, 0, 2, buf1); dtostrf(ay, 0, 2, buf2); dtostrf(az, 0, 2, buf3);
     Serial.printf("accel = (%s, %s, %s) m/s^2\n", buf1, buf2, buf3);
-    f2s(buf1, gx, 2); f2s(buf2, gy, 2); f2s(buf3, gz, 2);
+    dtostrf(gx, 0, 2, buf1); dtostrf(gy, 0, 2, buf2); dtostrf(gz, 0, 2, buf3);
     Serial.printf("gyro = (%s, %s, %s) rad/s\n", buf1, buf2, buf3);
-    f2s(buf1, mx, 2); f2s(buf2, my, 2); f2s(buf3, mz, 2);
+    dtostrf(mx, 0, 2, buf1); dtostrf(my, 0, 2, buf2); dtostrf(mz, 0, 2, buf3);
     Serial.printf("magn = (%s, %s, %s) G\n", buf1, buf2, buf3);
   }
   
@@ -397,36 +384,36 @@ void loop() {
   strcat(packet, buf1);
 
   // GPS data
-  f2s(buf1, GPS.location.lat(), 4); strcat(packet, ","); strcat(packet, buf1);
-  f2s(buf1, GPS.location.lng(), 4); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(GPS.location.lat(), 0, 4, buf1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(GPS.location.lng(), 0, 4, buf1); strcat(packet, ","); strcat(packet, buf1);
   snprintf(buf1, BUF_SIZE, "%d", (int)GPS.altitude.meters()); strcat(packet, ","); strcat(packet, buf1);
-  f2s(buf1, GPS.speed.kmph(), 1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(GPS.speed.kmph(), 0, 1, buf1); strcat(packet, ","); strcat(packet, buf1);
   snprintf(buf1, BUF_SIZE, "%d", (int)GPS.satellites.value()); strcat(packet, ","); strcat(packet, buf1);
 
   // Atmo data
-  f2s(buf1, baro_alt, 1); strcat(packet, ","); strcat(packet, buf1);
-  f2s(buf1, baro_height, 1); strcat(packet, ","); strcat(packet, buf1);
-  f2s(buf1, bme_temp, 1); strcat(packet, ","); strcat(packet, buf1);
-  f2s(buf1, bme_pres, 2); strcat(packet, ","); strcat(packet, buf1);
-  f2s(buf1, bme_humid, 1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(baro_alt, 0, 1, buf1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(baro_height, 0, 1, buf1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(bme_temp, 0, 1, buf1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(bme_pres, 0, 1, buf1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(bme_humid, 0, 1, buf1); strcat(packet, ","); strcat(packet, buf1);
 
   // Acceloremeter
-  f2s(buf1, ax, 2); strcat(packet, ","); strcat(packet, buf1);
-  f2s(buf1, ay, 2); strcat(packet, ","); strcat(packet, buf1);
-  f2s(buf1, az, 2); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(ax, 0, 2, buf1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(ay, 0, 2, buf1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(az, 0, 2, buf1);; strcat(packet, ","); strcat(packet, buf1);
 
   // Gyroscope
-  f2s(buf1, gx, 2); strcat(packet, ","); strcat(packet, buf1);
-  f2s(buf1, gy, 2); strcat(packet, ","); strcat(packet, buf1);
-  f2s(buf1, gz, 2); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(gx, 0, 2, buf1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(gy, 0, 2, buf1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(gz, 0, 2, buf1); strcat(packet, ","); strcat(packet, buf1);
 
   // Magnetometer
-  f2s(buf1, mx, 2); strcat(packet, ","); strcat(packet, buf1);
-  f2s(buf1, my, 2); strcat(packet, ","); strcat(packet, buf1);
-  f2s(buf1, mz, 2); strcat(packet, ","); strcat(packet, buf1);  
+  dtostrf(mx, 0, 2, buf1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(my, 0, 2, buf1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(mz, 0, 2, buf1); strcat(packet, ","); strcat(packet, buf1);  
 
   // Voltaje y nivel de la batería
-  f2s(buf1, bat_voltage, 2); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(bat_voltage, 0, 2, buf1); strcat(packet, ","); strcat(packet, buf1);
   snprintf(buf1, BUF_SIZE, "%d", (int)bat_level); strcat(packet, ","); strcat(packet, buf1); 
 
   // Transmitir paquete
@@ -445,26 +432,26 @@ void loop() {
   oled.clear();
   oled.drawString(0, 0, rtc_time_str);
   
-  f2s(buf1, GPS.location.lat(), 5);
-  f2s(buf2, GPS.location.lng(), 5);
-  sprintf(line_buf, "lat %s  lon %s  sat %d", buf1, buf2, GPS.satellites.value());
+  dtostrf(GPS.location.lat(), 0, 4, buf1);
+  dtostrf(GPS.location.lng(), 0, 4, buf1);
+  sprintf(line_buf, "lat %s  lon %s  %d", buf1, buf2, GPS.satellites.value());
   oled.drawString(0, 12, line_buf);
 
-  f2s(buf1, baro_alt, 1);
-  f2s(buf2, baro_height, 1);
-  f2s(buf3, bme_temp, 1);
+  dtostrf(baro_alt, 0, 1, buf1);
+  dtostrf(baro_height, 0, 1, buf2);
+  dtostrf(bme_temp, 0, 1, buf3);
   sprintf(line_buf, "alt %s [%s], T %s", buf1, buf2, buf3);
   oled.drawString(0, 24, line_buf);
 
-  f2s(buf1, ax, 2);
-  f2s(buf2, ay, 2);
-  f2s(buf3, az, 2);
+  dtostrf(ax, 0, 2, buf1);
+  dtostrf(ay, 0, 2, buf2);
+  dtostrf(az, 0, 2, buf3);
   sprintf(line_buf, "accel (%s,%s,%s)", buf1, buf2, buf3);
   oled.drawString(0, 36, line_buf);
 
-  f2s(buf1, gx, 2);
-  f2s(buf2, gy, 2);
-  f2s(buf3, gz, 2);
+  dtostrf(gx, 0, 2, buf1);
+  dtostrf(gy, 0, 2, buf2);
+  dtostrf(gz, 0, 2, buf3);
   sprintf(line_buf, "gyro (%s,%s,%s)", buf1, buf2, buf3);
   oled.drawString(0, 48, line_buf);
 
