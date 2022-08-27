@@ -148,11 +148,11 @@ void setup_RTC1307() {
   if (debug) Serial.println("RTC DS1307 inicializado");
 
   if (!rtc.isrunning()) {
-    if (debug) Serial.println("RTC is NOT running, resetting the time");
-    // When time needs to be set on a new device, or after a power loss, the
-    // following line sets the RTC to the date & time this sketch was compiled
-    rtc.adjust(DateTime(F(__DATE__), F(__TIME__))+mcu_offset);
-    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
+    if (debug) {
+      Serial.println("RTC no está corriendo!");
+      Serial.println("Cargar sketch para resetear el RTC");
+    }
+    while (1) delay(10);
   } else {
     if (debug) Serial.println("RTC is running");
   }
