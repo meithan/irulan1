@@ -23,8 +23,8 @@
 #include <Adafruit_Sensor.h>
 #include "Zanshin_BME680.h"
 #include "RTClib.h"
-#include "GPS_Air530.h"
-//#include "GPS_Air530Z.h"
+//#include "GPS_Air530.h"
+#include "GPS_Air530Z.h"
 #include "HT_SSD1306Wire.h"
 #include "LoRaWan_APP.h"
 
@@ -168,7 +168,7 @@ void setup_RTC1307() {
 // -------------------------------------
 // GPS
 
-Air530Class GPS;
+Air530ZClass GPS;
 
 void setup_GPS() {
   GPS.begin();
