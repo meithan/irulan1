@@ -433,14 +433,14 @@ void loop() {
   oled.drawString(0, 0, rtc_time_str);
   
   dtostrf(GPS.location.lat(), 0, 4, buf1);
-  dtostrf(GPS.location.lng(), 0, 4, buf1);
-  sprintf(line_buf, "lat %s  lon %s  %d", buf1, buf2, GPS.satellites.value());
+  dtostrf(GPS.location.lng(), 0, 4, buf2);
+  sprintf(line_buf, "lat %s lon %s %d", buf1, buf2, GPS.satellites.value());
   oled.drawString(0, 12, line_buf);
 
   dtostrf(baro_alt, 0, 1, buf1);
   dtostrf(baro_height, 0, 1, buf2);
   dtostrf(bme_temp, 0, 1, buf3);
-  sprintf(line_buf, "alt %s [%s], T %s", buf1, buf2, buf3);
+  sprintf(line_buf, "alt %s [%s], %sC", buf1, buf2, buf3);
   oled.drawString(0, 24, line_buf);
 
   dtostrf(ax, 0, 2, buf1);
