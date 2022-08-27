@@ -364,17 +364,35 @@ void loop() {
     Serial.print("lat "); Serial.print(GPS.location.lat());
     Serial.print(", lon "); Serial.print(GPS.location.lng());
     Serial.print(", sats "); Serial.print(GPS.satellites.value());
+    Serial.print(", alt "); Serial.print(GPS.altitude.meters());
+    Serial.print(", speed "); Serial.print(GPS.speed.kmph());
+    Serial.print(", time "); Serial.print(GPS.satellites.value());
     Serial.println();
   }
 
   // -------------------------------------- 
   // Voltage de la batería
 
-//  bat_voltage = getBatteryVoltage();
+  bat_voltage = getBatteryVoltage();
   bat_level = BoardGetBatteryLevel();
+ 
+  if (debug) {  
+    Serial.print("Battery: voltage = "); Serial.print(bat_voltage);
+    Serial.print(" mV, level = "); Serial.print(bat_level);
+    Serial.println();
+  }
 
   // --------------------------------------
-  // LORA
+  // Envío de telemetría por LoRa
+
+  // Valores enviados en el paquete:
+  // timestamp,
+  // gps_time,gps_lat,gps_lng,gps_alt,gps_speed,gps_sats,
+  // baro_alt,baro_height,atmo_temp,atmo_pres,atmo_rh,
+  // accel_x,accel_y,accel_z,
+  // gyro_x,gyro_y,gyro_z,
+  // magn_x,magn_y,magn_z,
+  // bat_voltage,bat_level
 
   // Armar paquete
   packet[0] = '\0';
@@ -384,6 +402,7 @@ void loop() {
   strcat(packet, buf1);
 
   // GPS data
+  snprintf(buf1, BUF_SIZE, "%d", (int)GPS.altitude.meters()); strcat(packet, ","); strcat(packet, buf1);
   dtostrf(GPS.location.lat(), 0, 4, buf1); strcat(packet, ","); strcat(packet, buf1);
   dtostrf(GPS.location.lng(), 0, 4, buf1); strcat(packet, ","); strcat(packet, buf1);
   snprintf(buf1, BUF_SIZE, "%d", (int)GPS.altitude.meters()); strcat(packet, ","); strcat(packet, buf1);
@@ -428,7 +447,8 @@ void loop() {
   turnOffRGB();
   
   // --------------------------------------
-  // Imprimir datos a OLED
+  // Mostrar datos en pantalla OLED
+  
   oled.clear();
   oled.drawString(0, 0, rtc_time_str);
   
@@ -461,6 +481,7 @@ void loop() {
   oled.display();
 
   // --------------------------------------
+
   if (next_millis > millis()) delay(next_millis - millis());
 
 }
