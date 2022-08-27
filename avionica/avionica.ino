@@ -43,16 +43,19 @@ const bool debug = true;
 // Variables globales
 
 // RTC
-char rtc_time_buf[19];
+char rtc_time_str[19];
 
 //LSM9DS1
 float ax, ay, az, gx, gy, gz, mx, my, mz;
 
 // BME680
 const float QNH_INHG = 30.32;
-float bme_pres, bme_humid, bme_temp, baro_alt, baro_alt_start, baro_alt_dif;
+float bme_pres, bme_humid, bme_temp, baro_alt, baro_alt_start, baro_height;
 static int32_t _temp, _humid, _pres, _gas;
 bool bme_success;
+
+uint16_t bat_voltage;
+uint8_t bat_level;
 
 char line_buf[18];
 char buf1[BUF_SIZE], buf2[BUF_SIZE], buf3[BUF_SIZE];
@@ -67,6 +70,7 @@ unsigned long next_millis = 0;
 
 // I2C
 Adafruit_LSM9DS1 lsm = Adafruit_LSM9DS1();
+sensors_event_t accel, magn, gyro, imu_temp;
 
 void setup_LSM9DS1() {
 
@@ -135,6 +139,7 @@ float calc_altitude(const int32_t press) {
 // RTC1307 
 
 RTC_DS1307 rtc;
+DateTime now;
 TimeSpan mcu_offset = TimeSpan(0,0,0,10);
 
 void setup_RTC1307() {
@@ -203,7 +208,7 @@ void setup_OLED() {
 #define LORA_IQ_INVERSION_ON              false
 
 // Payload and TX settings
-#define PACKET_SIZE        64     // bytes
+#define PACKET_SIZE        160     // bytes
 
 #define LED_COLOR_RED 0xff0000
 #define LED_COLOR_GREEN 0x00ff00
@@ -212,7 +217,6 @@ void setup_OLED() {
 char packet[PACKET_SIZE];
 static RadioEvents_t RadioEvents;
 int16_t rssi, rxSize;
-uint16_t bat_voltage;
 
 void setup_LoRa() {
   
@@ -231,7 +235,7 @@ void setup_LoRa() {
 
 // Convierte un float en una string decimal, con decs decimales
 void f2s (char* buf, float value, unsigned int decs) {
-  buf[0] = 0;
+  buf[0] = '\0';
   float fractpart, intpart;
   fractpart = modf(value, &intpart);
   fractpart = fabs(fractpart) * (pow(10,decs));
@@ -252,6 +256,7 @@ void setup() {
   delay(1000);
 
   if (debug) {
+    Serial.println();
     Serial.println("*************************");
     Serial.println("*   Avionica Irulan-1   *");
     Serial.print("*        "); Serial.print(version_str); Serial.println("           *");
@@ -313,13 +318,12 @@ void loop() {
   
   // --------------------------------------
   // RTC1307
-  DateTime now = rtc.now();
-
-  sprintf(rtc_time_buf,"%02u-%02u-%02u %02u:%02u:%02u ", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
+  now = rtc.now();
+  sprintf(rtc_time_str, "%02u-%02u-%02u %02u:%02u:%02u", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
   
   if (debug) {
     Serial.print("RTC ");
-    Serial.print(rtc_time_buf);
+    Serial.print(rtc_time_str);
     Serial.print(" (");
     Serial.print("UNIX = ");
     Serial.print(now.unixtime());
@@ -330,7 +334,6 @@ void loop() {
   // LSM9DS1
   
   lsm.read();
-  sensors_event_t accel, magn, gyro, imu_temp;
   lsm.getEvent(&accel, &magn, &gyro, &imu_temp); 
 
   ax = accel.acceleration.x; ay = accel.acceleration.y; az = accel.acceleration.z;
@@ -338,15 +341,12 @@ void loop() {
   mx = magn.magnetic.x; my = magn.magnetic.y; mz = magn.magnetic.z;
 
   if (debug) {   
-    Serial.print("accel = (");
-    Serial.print(ax); Serial.print(","); Serial.print(ay); Serial.print(","); Serial.print(az);
-    Serial.println(") m/s^2, ");
-    Serial.print("gyro = (");
-    Serial.print(gx); Serial.print(","); Serial.print(gy); Serial.print(","); Serial.print(gz);
-    Serial.println(") rad/s");
-    Serial.print("magn = (");
-    Serial.print(mx); Serial.print(","); Serial.print(my); Serial.print(","); Serial.print(mz);
-    Serial.println(") G");
+    f2s(buf1, ax, 2); f2s(buf2, ay, 2); f2s(buf3, az, 2);
+    Serial.printf("accel = (%s, %s, %s) m/s^2\n", buf1, buf2, buf3);
+    f2s(buf1, gx, 2); f2s(buf2, gy, 2); f2s(buf3, gz, 2);
+    Serial.printf("gyro = (%s, %s, %s) rad/s\n", buf1, buf2, buf3);
+    f2s(buf1, mx, 2); f2s(buf2, my, 2); f2s(buf3, mz, 2);
+    Serial.printf("magn = (%s, %s, %s) G\n", buf1, buf2, buf3);
   }
   
   // --------------------------------------
@@ -357,11 +357,11 @@ void loop() {
   bme_humid = ((float)_humid) / 1000;
   bme_pres = ((float)_pres) / 100;
   baro_alt = calc_altitude(_pres);
-  baro_alt_dif = baro_alt - baro_alt_start;
+  baro_height = baro_alt - baro_alt_start;
 
   if (debug) {
     Serial.print(baro_alt); Serial.print(" m, ");
-    Serial.print(baro_alt_dif); Serial.print(" m, ");
+    Serial.print(baro_height); Serial.print(" m, ");
     Serial.print(bme_temp); Serial.print(" degC, ");
     Serial.print(bme_pres); Serial.print(" hPa, ");
     Serial.print(bme_humid); Serial.print(" RH%");
@@ -370,6 +370,8 @@ void loop() {
 
   // -------------------------------------- 
   // GPS
+
+  GPS.encode(GPS.read());
   
   if (debug) {  
     Serial.print("lat "); Serial.print(GPS.location.lat());
@@ -380,28 +382,68 @@ void loop() {
 
   // -------------------------------------- 
   // Voltage de la batería
-  pinMode(VBAT_ADC_CTL,OUTPUT);
-  digitalWrite(VBAT_ADC_CTL,LOW);
-  bat_voltage = analogRead(ADC)*2;
-  pinMode(VBAT_ADC_CTL, INPUT);
+
+//  bat_voltage = getBatteryVoltage();
+  bat_level = BoardGetBatteryLevel();
 
   // --------------------------------------
   // LORA
 
   // Armar paquete
-  sprintf(packet, "%s", rtc_time_buf);
+  packet[0] = '\0';
+  
+  // UNIX timestamp
+  snprintf(buf1, BUF_SIZE, "%d", now.unixtime());
+  strcat(packet, buf1);
+
+  // GPS data
+  f2s(buf1, GPS.location.lat(), 4); strcat(packet, ","); strcat(packet, buf1);
+  f2s(buf1, GPS.location.lng(), 4); strcat(packet, ","); strcat(packet, buf1);
+  snprintf(buf1, BUF_SIZE, "%d", (int)GPS.altitude.meters()); strcat(packet, ","); strcat(packet, buf1);
+  f2s(buf1, GPS.speed.kmph(), 1); strcat(packet, ","); strcat(packet, buf1);
+  snprintf(buf1, BUF_SIZE, "%d", (int)GPS.satellites.value()); strcat(packet, ","); strcat(packet, buf1);
+
+  // Atmo data
+  f2s(buf1, baro_alt, 1); strcat(packet, ","); strcat(packet, buf1);
+  f2s(buf1, baro_height, 1); strcat(packet, ","); strcat(packet, buf1);
+  f2s(buf1, bme_temp, 1); strcat(packet, ","); strcat(packet, buf1);
+  f2s(buf1, bme_pres, 2); strcat(packet, ","); strcat(packet, buf1);
+  f2s(buf1, bme_humid, 1); strcat(packet, ","); strcat(packet, buf1);
+
+  // Acceloremeter
+  f2s(buf1, ax, 2); strcat(packet, ","); strcat(packet, buf1);
+  f2s(buf1, ay, 2); strcat(packet, ","); strcat(packet, buf1);
+  f2s(buf1, az, 2); strcat(packet, ","); strcat(packet, buf1);
+
+  // Gyroscope
+  f2s(buf1, gx, 2); strcat(packet, ","); strcat(packet, buf1);
+  f2s(buf1, gy, 2); strcat(packet, ","); strcat(packet, buf1);
+  f2s(buf1, gz, 2); strcat(packet, ","); strcat(packet, buf1);
+
+  // Magnetometer
+  f2s(buf1, mx, 2); strcat(packet, ","); strcat(packet, buf1);
+  f2s(buf1, my, 2); strcat(packet, ","); strcat(packet, buf1);
+  f2s(buf1, mz, 2); strcat(packet, ","); strcat(packet, buf1);  
+
+  // Voltaje y nivel de la batería
+  f2s(buf1, bat_voltage, 2); strcat(packet, ","); strcat(packet, buf1);
+  snprintf(buf1, BUF_SIZE, "%d", (int)bat_level); strcat(packet, ","); strcat(packet, buf1); 
 
   // Transmitir paquete
   turnOnRGB(LED_COLOR_RED, 0);
-  if (debug) Serial.println("Transmitting ...");
+  if (debug) {
+    Serial.printf("Tamaño de paquete: %d bytes\n", strlen(packet));
+    Serial.println(packet);
+    Serial.println("Transmitiendo telemetría ...");
+  }
   Radio.Send((uint8_t*)packet, strlen(packet));
-  if (debug) Serial.println("TX done");
+  if (debug) Serial.println("TX completada");
   turnOffRGB();
   
   // --------------------------------------
   // Imprimir datos a OLED
   oled.clear();
-  oled.drawString(0, 0, rtc_time_buf);
+  oled.drawString(0, 0, rtc_time_str);
   
   f2s(buf1, GPS.location.lat(), 5);
   f2s(buf2, GPS.location.lng(), 5);
@@ -409,7 +451,7 @@ void loop() {
   oled.drawString(0, 12, line_buf);
 
   f2s(buf1, baro_alt, 1);
-  f2s(buf2, baro_alt_dif, 1);
+  f2s(buf2, baro_height, 1);
   f2s(buf3, bme_temp, 1);
   sprintf(line_buf, "alt %s [%s], T %s", buf1, buf2, buf3);
   oled.drawString(0, 24, line_buf);
