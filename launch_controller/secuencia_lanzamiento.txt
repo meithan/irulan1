@@ -1,0 +1,32 @@
+Secuencia de ignición
+
+- Verificar área de lanzamiento LIBRE
+- Verificar Switch de Energía en OFF, Switch de Armado en OFF, cables de Energía e Ignizor desconectados
+- Conectar cables de Energía (a batería 12V)
+- Switch de Energía en ON; verificar encendido luz testigo Energía
+- Conectar cables del Ignizor; verificar encendido luz testigo Cont.
+- Switch de Armado en ON; verificar encendido luz testigo Armado
+- Emitir aviso de Armado
+- Iniciar cuenta regresiva
+- Oprimir botón Lanzar
+
+Si lanzamiento exitoso:
+- Desconectar cables del Ignizor
+- Switch de Armado en OFF; verificar apagado luz testigo Armado
+- Switch de Energía en OFF; verificar apagado luz testigo Energía
+- Desconectar cables de Energía
+
+Si lanzamiento no exitoso, inmediatamente:
+- Verificar luz de Cont.
+- Oprimir botón Lanzar de nuevo
+
+Si ignizor sigue sin encenderse:
+- Desconectar cables del Ignizor
+- Switch de Armado en OFF; verificar apagado luz testigo Armado
+- Switch de Energía en OFF; verificar apagado luz testigo Energía
+- Verificar colocación del ignizor en vehículo lanzador
+- Repetir secuencia de ignición
+
+
+
+
