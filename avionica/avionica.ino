@@ -46,7 +46,7 @@ const bool debug = true;
 char rtc_time_str[19];
 
 //LSM9DS1
-float ax, ay, az, gx, gy, gz, mx, my, mz;
+float ax, ay, az, gx, gy, gz, mx, my, mz, gees, omega;
 
 // BME680
 const float QNH_INHG = 30.32;
@@ -54,12 +54,18 @@ float bme_pres, bme_humid, bme_temp, baro_alt, baro_alt_start, baro_height;
 static int32_t _temp, _humid, _pres, _gas;
 bool bme_success;
 
+float max_height = 0;    // Altura máxima (sobre nivel del suelo)
+float max_speed = 0;     // Rapidez máxima
+float max_gees = 0;      // Aceleración máxima, en g's
+float max_omega = 0;     // Velocidad angular máxima
+
 uint16_t bat_voltage;
-uint8_t bat_level;
+int8_t bat_level;
 
 char line_buf[18];
 char buf1[BUF_SIZE], buf2[BUF_SIZE], buf3[BUF_SIZE];
 
+unsigned long mark = 0;
 unsigned long next_millis = 0;
 
 // ===========================================================
@@ -102,7 +108,7 @@ void setup_LSM9DS1() {
 // -------------------------------------
 // BME680
 
-const uint8_t BME_SPI_CS_PIN = GPIO11;
+const uint8_t BME_SPI_CS_PIN = GPIO7;
 BME680_Class BME680;
 
 const float INHG_to_MB = 33.86389;
@@ -123,6 +129,10 @@ void setup_BME680() {
   
   // Desactivamos el sensor de gas para tener lectura de temperatura más limpia
   BME680.setGas(0, 0);
+
+  // Esperamos un poco para que se estabilice la lectura antes de marcar la presión
+  // de referencia
+  delay(1000);
 
   BME680.getSensorData(_temp, _humid, _pres, _gas);
   baro_alt_start = calc_altitude(_pres);
@@ -170,9 +180,12 @@ void setup_RTC1307() {
 
 Air530ZClass GPS;
 
+const unsigned long GPS_READ_TIMEOUT = 100;
+
 void setup_GPS() {
   GPS.begin();
-  GPS.setmode(MODE_GPS_GLONASS);
+//  GPS.setmode(MODE_GPS_GLONASS);
+  GPS.setmode(MODE_GPS);
 }
 
 // -------------------------------------
@@ -230,6 +243,21 @@ void setup_LoRa() {
 
 }
 
+// -------------------------------------
+// Funciones de utilería
+
+const uint16_t bat_v2 = 4200;
+const int8_t bat_l2 = 100;
+const uint16_t bat_v1 = 3000;
+const int8_t bat_l1 = 1;
+int8_t calcBatteryLevel(uint16_t mV) {
+  if (mV < bat_v1) return 0;
+  else if (mV > bat_v2) return 100;
+  else {
+    return (int)(100 * ((float)(mV - bat_v1) / (bat_v2 - bat_v1)));
+  }
+}
+
 // ===========================================================
 // Inicialización principal
 
@@ -254,11 +282,11 @@ void setup() {
   
   oled.setTextAlignment(TEXT_ALIGN_CENTER);
   oled.setFont(ArialMT_Plain_16);
-  oled.drawString(64, 32-12, "Avionica Irulan-1");
-  oled.drawString(64, 32+8, "Inicializando...");
+  oled.drawString(64, 32-20, "Avionica Irulan-1");
+  oled.drawString(64, 32+2, "Inicializando...");
   oled.display();
   
-  delay(1000);
+  delay(2000);
 
   if (debug) {
     Serial.println();
@@ -268,20 +296,24 @@ void setup() {
   oled.setTextAlignment(TEXT_ALIGN_LEFT);
   oled.setFont(ArialMT_Plain_16);
 
+  oled.drawString(0, 0, "DS1307 ... ");
   setup_RTC1307();
-  oled.drawString(0, 0, "DS1307 ... OK");
+  oled.drawString(96, 0, "OK");
   oled.display();
 
+  oled.drawString(0, 16, "LSM9DS1 ... ");
   setup_LSM9DS1();
-  oled.drawString(0, 16, "LSM9DS1 ... OK");
-  oled.display();
-  
-  setup_BME680();
-  oled.drawString(0, 32, "BME680 ... OK");
+  oled.drawString(96, 16, "OK");
   oled.display();
 
+  oled.drawString(0, 32, "BME680 ... ");
+  setup_BME680();
+  oled.drawString(96, 32, "OK");
+  oled.display();
+
+  oled.drawString(0, 48, "GPS ... ");
   setup_GPS();
-  oled.drawString(0, 48, "GPS ... OK");
+  oled.drawString(96, 48, "OK");
   oled.display();
 
   setup_LoRa();
@@ -327,6 +359,11 @@ void loop() {
   gx = gyro.gyro.x; gy = gyro.gyro.y; gz = gyro.gyro.z;
   mx = magn.magnetic.x; my = magn.magnetic.y; mz = magn.magnetic.z;
 
+  gees = sqrt(ax*ax + ay*ay + az*az)/9.8067;
+  if (gees > max_gees) max_gees = gees;
+  omega = sqrt(gx*gx + gy*gy + gz*gz);
+  if (omega > max_omega) max_omega = omega;
+
   if (debug) {
     dtostrf(ax, 0, 2, buf1); dtostrf(ay, 0, 2, buf2); dtostrf(az, 0, 2, buf3);
     Serial.printf("accel = (%s, %s, %s) m/s^2\n", buf1, buf2, buf3);
@@ -345,6 +382,7 @@ void loop() {
   bme_pres = ((float)_pres) / 100;
   baro_alt = calc_altitude(_pres);
   baro_height = baro_alt - baro_alt_start;
+  if (baro_height > max_height) max_height = baro_height;
 
   if (debug) {
     Serial.print(baro_alt); Serial.print(" m, ");
@@ -358,7 +396,12 @@ void loop() {
   // -------------------------------------- 
   // GPS
 
-  GPS.encode(GPS.read());
+  mark = millis();
+  while ((GPS.available()) > 0 && (millis() - mark < GPS_READ_TIMEOUT)) {
+    GPS.encode(GPS.read());
+  }
+
+  if (GPS.speed.kmph() > max_speed) max_speed = GPS.speed.kmph();
   
   if (debug) {  
     Serial.print("lat "); Serial.print(GPS.location.lat());
@@ -366,7 +409,7 @@ void loop() {
     Serial.print(", sats "); Serial.print(GPS.satellites.value());
     Serial.print(", alt "); Serial.print(GPS.altitude.meters());
     Serial.print(", speed "); Serial.print(GPS.speed.kmph());
-    Serial.print(", time "); Serial.print(GPS.satellites.value());
+    Serial.print(", time "); Serial.print(GPS.time.value());
     Serial.println();
   }
 
@@ -374,11 +417,11 @@ void loop() {
   // Voltage de la batería
 
   bat_voltage = getBatteryVoltage();
-  bat_level = BoardGetBatteryLevel();
+  bat_level = calcBatteryLevel(bat_voltage);
  
   if (debug) {  
-    Serial.print("Battery: voltage = "); Serial.print(bat_voltage);
-    Serial.print(" mV, level = "); Serial.print(bat_level);
+    Serial.print("Battery: "); Serial.print(bat_voltage);
+    Serial.print(" mV, lvl = "); Serial.print(bat_level);
     Serial.println();
   }
 
@@ -388,7 +431,7 @@ void loop() {
   // Valores enviados en el paquete:
   // timestamp,
   // gps_time,gps_lat,gps_lng,gps_alt,gps_speed,gps_sats,
-  // baro_alt,baro_height,atmo_temp,atmo_pres,atmo_rh,
+  // baro_alt,baro_height,max_height,atmo_temp,atmo_pres,atmo_rh,
   // accel_x,accel_y,accel_z,
   // gyro_x,gyro_y,gyro_z,
   // magn_x,magn_y,magn_z,
@@ -402,7 +445,7 @@ void loop() {
   strcat(packet, buf1);
 
   // GPS data
-  snprintf(buf1, BUF_SIZE, "%d", (int)GPS.altitude.meters()); strcat(packet, ","); strcat(packet, buf1);
+  snprintf(buf1, BUF_SIZE, "%d", (int)GPS.time.value()); strcat(packet, ","); strcat(packet, buf1);
   dtostrf(GPS.location.lat(), 0, 4, buf1); strcat(packet, ","); strcat(packet, buf1);
   dtostrf(GPS.location.lng(), 0, 4, buf1); strcat(packet, ","); strcat(packet, buf1);
   snprintf(buf1, BUF_SIZE, "%d", (int)GPS.altitude.meters()); strcat(packet, ","); strcat(packet, buf1);
@@ -412,6 +455,7 @@ void loop() {
   // Atmo data
   dtostrf(baro_alt, 0, 1, buf1); strcat(packet, ","); strcat(packet, buf1);
   dtostrf(baro_height, 0, 1, buf1); strcat(packet, ","); strcat(packet, buf1);
+  dtostrf(max_height, 0, 1, buf1); strcat(packet, ","); strcat(packet, buf1);
   dtostrf(bme_temp, 0, 1, buf1); strcat(packet, ","); strcat(packet, buf1);
   dtostrf(bme_pres, 0, 1, buf1); strcat(packet, ","); strcat(packet, buf1);
   dtostrf(bme_humid, 0, 1, buf1); strcat(packet, ","); strcat(packet, buf1);
@@ -451,12 +495,31 @@ void loop() {
   
   oled.clear();
   oled.drawString(0, 0, rtc_time_str);
-  
-  dtostrf(GPS.location.lat(), 0, 4, buf1);
-  dtostrf(GPS.location.lng(), 0, 4, buf2);
-  sprintf(line_buf, "lat %s lon %s %d", buf1, buf2, GPS.satellites.value());
+
+  if ((GPS.location.lat() != 0) && (GPS.location.lng() != 0)) {
+    dtostrf(GPS.location.lat(), 0, 4, buf1);
+    dtostrf(-GPS.location.lng(), 0, 4, buf2);
+    sprintf(line_buf, "%s N, %s W (%d)", buf1, buf2, GPS.satellites.value());
+  } else {
+    sprintf(line_buf, "GPS: NO FIX");
+  }
   oled.drawString(0, 12, line_buf);
 
+  dtostrf(max_height, 0, 1, buf1);
+  sprintf(line_buf, ">> APOGEE: %s m", buf1);
+  oled.drawString(0, 24, line_buf);
+
+  dtostrf(max_speed, 0, 2, buf1);
+  dtostrf(max_gees, 0, 2, buf2);
+  dtostrf(max_omega, 0, 2, buf3);
+  sprintf(line_buf, "%s kph, %s g, %s r/s", buf1, buf2, buf3);
+  oled.drawString(0, 36, line_buf);
+
+  dtostrf((float)bat_voltage/1000.0, 0, 2, buf1);
+  sprintf(line_buf, "BAT %d%% (%s V)", (int)bat_level, buf1);
+  oled.drawString(0, 48, line_buf);
+  
+/*
   dtostrf(baro_alt, 0, 1, buf1);
   dtostrf(baro_height, 0, 1, buf2);
   dtostrf(bme_temp, 0, 1, buf3);
@@ -474,10 +537,8 @@ void loop() {
   dtostrf(gz, 0, 2, buf3);
   sprintf(line_buf, "gyro (%s,%s,%s)", buf1, buf2, buf3);
   oled.drawString(0, 48, line_buf);
+*/
 
-//  sprintf(line_buf, "magn (%d.%02d,%d.%02d,%d.%02d)", (int)mx, (int)(abs(mx)*100)%100, (int)my, (int)(abs(my)*100)%100, (int)mz, (int)(abs(mz)*100)%100);
-//  oled.drawString(0, 48, line_buf);
-  
   oled.display();
 
   // --------------------------------------

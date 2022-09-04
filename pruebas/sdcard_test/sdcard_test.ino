@@ -8,18 +8,19 @@
 
 // -------------------------------------------
 // HTCC-AB01 GENERAL CONFIGURATION
+
 #ifndef LoraWan_RGB
 #define LoraWan_RGB 0
 #endif
-
 #define LED_GREEN 0x00ff00
+#define LED_RED 0xff0000
 #define LED_OFF 0
 
 // -------------------------------------------
 // SD card reader configuration
 
 // SPI
-#define SPI_CS GPIO0
+#define SPI_CS GPIO1
 
 // -------------------------------------------
 
@@ -36,6 +37,7 @@ void setup() {
   while (!Serial) {
     delay(1); // will pause Zero, Leonardo, etc until serial console opens
   }
+  delay(1000);
 
   // ----------------------
   // SPI initialization
@@ -55,12 +57,12 @@ void setup() {
   Serial.print("Initializing SD card reader ...");
   if (!SD.begin(SPI_CS)) {
     Serial.println(" failed!");
-//    turnOnRGB(0xff0000,0);
+    turnOnRGB(LED_RED,0);
     while(1);
   }
   Serial.println(" done.");
 
-  turnOnRGB(0x00ff00,0);
+  turnOnRGB(LED_GREEN,0);
 
 }
 

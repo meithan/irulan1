@@ -18,7 +18,7 @@ const uint32_t SERIAL_SPEED = 115200;
 const unsigned long cycle_time = 500;   // Milisegundos
 const unsigned long led_on_time = 250;
 
-const bool debug = true;
+const bool debug = false;
 
 // ===========================================================
 
@@ -50,6 +50,7 @@ const bool debug = true;
 #define LED_OFF 0
 
 char rxpacket[MAX_PACKET_SIZE];
+char output_data[256];
 static RadioEvents_t RadioEvents;
 int16_t packetNumber;
 int16_t rssi, rxSize, snr;
@@ -74,10 +75,9 @@ void f2s (char* buf, float value, unsigned int decs) {
 
 void setup() {
 
-  if (debug) Serial.begin(SERIAL_SPEED);
-
+  Serial.begin(SERIAL_SPEED);
+  delay(1000);
   if (debug) {
-    delay(1000);
     Serial.println();
     Serial.println("==========================");
     Serial.println("Inicializando radio LoRa ...");
@@ -112,12 +112,12 @@ void setup() {
 // ===========================================================
 
 void loop() {
-//
-//  if ((led_state == 0) && (millis() - last_rx > 5000)) {
-//    led_state = 2;
-//    turnOnRGB(LED_COLOR_RED, 0);
-//  }
-//
+/*
+  if ((led_state == 0) && (millis() - last_rx > 5000)) {
+    led_state = 2;
+    turnOnRGB(LED_COLOR_RED, 0);
+  }
+*/
   if (led_state == 1) {
     if (millis() >= next_led_off) {
       turnOffRGB();
@@ -132,7 +132,7 @@ void loop() {
     next_cycle_time += cycle_time;
     
 	  Radio.Rx(0);
-//    Radio.IrqP/rocess();
+//    Radio.IrqProcess();
 
   }
 
@@ -153,7 +153,16 @@ void OnRxDone(uint8_t *payload, uint16_t _size, int16_t _rssi, int8_t _snr) {
     last_rx = millis();
     
     Radio.Sleep( );
-    Serial.printf("\r\nPaquete #%d recibido, %d bytes, rssi=%d, snr=%d\r\n", packetNumber, rxSize, rssi, snr);
-    Serial.println(rxpacket);
+    
+    if (debug) { 
+      Serial.printf("\r\nPaquete #%d recibido, %d bytes, rssi=%d, snr=%d\r\n", packetNumber, rxSize, rssi, snr);
+      Serial.println(rxpacket);
+    } else {
+      // Escribir paquete (modificado) al puerto serial
+      sprintf(output_data, "/*%s,%d,%d*/", rxpacket, rssi, snr);
+      Serial.println(output_data);
+    }
+
+    
     
 }
